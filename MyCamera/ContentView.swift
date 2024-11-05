@@ -12,25 +12,47 @@ import UIKit
 
 struct ContentView: View {
     @StateObject private var cameraModel = CameraModel()
-    
+    @State private var showFlash = false
+
     var body: some View {
         ZStack {
-            CameraPreview(camera: cameraModel)
-                .ignoresSafeArea()
-                .overlay(
+            GeometryReader { geometry in
+                VStack(spacing: 0) {
+                    Spacer()
+                    ZStack {
+                        // Camera Preview
+                        CameraPreview(camera: cameraModel)
+                            .aspectRatio(1, contentMode: .fit)
+                            .clipped()
+                        
+                        // White Rounded Border at Corners
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.white.opacity(0.7), lineWidth: 2)
+                            .padding(20)
+                    }
+                    .frame(width: geometry.size.width, height: geometry.size.width)
+                    Spacer()
+                }
+                .background(Color.black)
+                
+                // Top and Bottom Dark Overlays
+                VStack {
                     Rectangle()
-                        .fill(LinearGradient(gradient: Gradient(colors: [.black.opacity(0.5), .clear, .clear, .black.opacity(0.5)]), startPoint: .top, endPoint: .bottom))
-                )
-                .overlay(
+                        .fill(Color.black.opacity(0.25))
+                        .frame(height: (geometry.size.height - geometry.size.width) / 2)
+                    Spacer()
                     Rectangle()
-                        .stroke(Color.white.opacity(0.7), lineWidth: 2)
-                        .padding(20)
-                )
+                        .fill(Color.black.opacity(0.25))
+                        .frame(height: (geometry.size.height - geometry.size.width) / 2)
+                }
+            }
             
+            // Shutter Button and Flash Effect
             VStack {
                 Spacer()
                 Button(action: {
                     cameraModel.takePhoto()
+                    triggerFlash()
                 }) {
                     Circle()
                         .fill(Color.white)
@@ -42,122 +64,27 @@ struct ContentView: View {
                 }
                 .padding(.bottom, 30)
             }
+            
+            if showFlash {
+                Color.white
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+            }
         }
         .onAppear {
             cameraModel.checkPermissions()
         }
     }
-}
-
-class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
-    var session = AVCaptureSession()
-    private var photoOutput = AVCapturePhotoOutput()
-    private let sessionQueue = DispatchQueue(label: "cameraSessionQueue")
     
-    override init() {
-        super.init()
-    }
-    
-    func setupCamera() {
-        sessionQueue.async {
-            self.session.beginConfiguration()
-            
-            guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
-                return
-            }
-            
-            do {
-                let input = try AVCaptureDeviceInput(device: device)
-                if self.session.canAddInput(input) {
-                    self.session.addInput(input)
-                }
-            } catch {
-                print("Error creating device input: \(error.localizedDescription)")
-                return
-            }
-            
-            if self.session.canAddOutput(self.photoOutput) {
-                self.session.addOutput(self.photoOutput)
-            }
-            
-            self.session.commitConfiguration()
-            self.session.startRunning()
+    // Flash Effect Function
+    private func triggerFlash() {
+        withAnimation(.easeInOut(duration: 0.1)) {
+            showFlash = true
         }
-    }
-    
-    func takePhoto() {
-        sessionQueue.async {
-            let settings = AVCapturePhotoSettings()
-            self.photoOutput.capturePhoto(with: settings, delegate: self)
-        }
-    }
-    
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        if let error = error {
-            print("Error capturing photo: \(error.localizedDescription)")
-            return
-        }
-        
-        guard let imageData = photo.fileDataRepresentation(),
-              let uiImage = UIImage(data: imageData) else {
-            print("Failed to process photo data.")
-            return
-        }
-        
-        self.savePhotoToLibrary(uiImage: uiImage)
-    }
-    
-    private func savePhotoToLibrary(uiImage: UIImage) {
-        PHPhotoLibrary.requestAuthorization { status in
-            guard status == .authorized else {
-                print("Photo Library access denied.")
-                return
-            }
-            PHPhotoLibrary.shared().performChanges {
-                PHAssetChangeRequest.creationRequestForAsset(from: uiImage)
-            } completionHandler: { success, error in
-                if !success {
-                    print("Error saving photo: \(error?.localizedDescription ?? "Unknown error")")
-                }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.easeInOut(duration: 0.1)) {
+                showFlash = false
             }
         }
     }
-    
-    func checkPermissions() {
-        switch AVCaptureDevice.authorizationStatus(for: .video) {
-        case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { granted in
-                if granted {
-                    self.setupCamera()
-                }
-            }
-        case .authorized:
-            setupCamera()
-        default:
-            break
-        }
-    }
-}
-
-struct CameraPreview: UIViewRepresentable {
-    class PreviewView: UIView {
-        override class var layerClass: AnyClass {
-            AVCaptureVideoPreviewLayer.self
-        }
-        
-        var previewLayer: AVCaptureVideoPreviewLayer {
-            return layer as! AVCaptureVideoPreviewLayer
-        }
-    }
-    
-    var camera: CameraModel
-    
-    func makeUIView(context: Context) -> PreviewView {
-        let view = PreviewView()
-        view.previewLayer.session = camera.session
-        view.previewLayer.videoGravity = .resizeAspectFill
-        return view
-    }
-    
-    func updateUIView(_ uiView: PreviewView, context: Context) {}
 }
