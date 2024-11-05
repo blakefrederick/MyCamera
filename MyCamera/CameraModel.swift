@@ -72,55 +72,47 @@ class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
         savePhotoToLibrary(uiImage: processedImage)
     }
     
-    func processImage(uiImage: UIImage) -> UIImage {
-        let imageSize = uiImage.size
-        let squareLength = min(imageSize.width, imageSize.height)
-        let x = (imageSize.width - squareLength) / 2
-        let y = (imageSize.height - squareLength) / 2
-        let cropRect = CGRect(x: x, y: y, width: squareLength, height: squareLength)
-        
-        guard let cgImage = uiImage.cgImage?.cropping(to: cropRect) else {
-            print("Failed to crop image.")
-            return uiImage
-        }
-        
-        let croppedImage = UIImage(cgImage: cgImage, scale: uiImage.scale, orientation: uiImage.imageOrientation)
-        
-        // Create a new image context to draw overlays and borders
-        UIGraphicsBeginImageContextWithOptions(croppedImage.size, false, uiImage.scale)
-        guard let context = UIGraphicsGetCurrentContext() else {
-            print("Failed to create graphics context.")
-            return croppedImage
-        }
-        
-        // Draw the cropped image
-        croppedImage.draw(at: CGPoint.zero)
-        
-        let overlayColor = UIColor.black.withAlphaComponent(0.25)
-        let borderColor = UIColor.white.withAlphaComponent(0.7)
-        
-        let imageWidth = croppedImage.size.width
-        let imageHeight = croppedImage.size.height
-        
-        // Draw top and bottom overlays (25% of the image height)
-        let overlayHeight = imageHeight * 0.25
-        context.setFillColor(overlayColor.cgColor)
-        context.fill(CGRect(x: 0, y: 0, width: imageWidth, height: overlayHeight))
-        context.fill(CGRect(x: 0, y: imageHeight - overlayHeight, width: imageWidth, height: overlayHeight))
-        
-        // Draw white border at corners
-        let rect = CGRect(x: 20, y: 20, width: imageWidth - 40, height: imageHeight - 40)
-        let path = UIBezierPath(roundedRect: rect, cornerRadius: 5)
-        path.lineWidth = 1
-        borderColor.setStroke()
-        path.stroke()
-        
-        // Get the new image
-        let processedImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        
-        return processedImage ?? croppedImage
+func processImage(uiImage: UIImage) -> UIImage {
+    let imageSize = uiImage.size
+    let squareLength = min(imageSize.width, imageSize.height)
+    let x = (imageSize.width - squareLength) / 2
+    let y = (imageSize.height - squareLength) / 2
+    let cropRect = CGRect(x: x, y: y, width: squareLength, height: squareLength)
+    
+    guard let cgImage = uiImage.cgImage?.cropping(to: cropRect) else {
+        print("Failed to crop image.")
+        return uiImage
     }
+    
+    let croppedImage = UIImage(cgImage: cgImage, scale: uiImage.scale, orientation: uiImage.imageOrientation)
+    
+    // Create a new image context to draw  the corners and transparent overlay
+    UIGraphicsBeginImageContextWithOptions(croppedImage.size, false, uiImage.scale)
+    guard let context = UIGraphicsGetCurrentContext() else {
+        print("Failed to create graphics context.")
+        return croppedImage
+    }
+    
+    // Draw the cropped image
+    croppedImage.draw(at: CGPoint.zero)
+    
+    let overlayColor = UIColor.black.withAlphaComponent(0.25)
+    let imageWidth = croppedImage.size.width
+    let imageHeight = croppedImage.size.height
+    
+    // Draw top and bottom overlays (25% of the image height)
+    let overlayHeight = imageHeight * 0.25
+    context.setFillColor(overlayColor.cgColor)
+    context.fill(CGRect(x: 0, y: 0, width: imageWidth, height: overlayHeight))
+    context.fill(CGRect(x: 0, y: imageHeight - overlayHeight, width: imageWidth, height: overlayHeight))
+    
+    // Get the processed image
+    let processedImage = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    
+    return processedImage ?? croppedImage
+}
+
     
     private func savePhotoToLibrary(uiImage: UIImage) {
         PHPhotoLibrary.requestAuthorization { status in

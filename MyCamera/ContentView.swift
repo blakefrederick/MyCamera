@@ -18,32 +18,27 @@ struct ContentView: View {
         ZStack {
             GeometryReader { geometry in
                 VStack(spacing: 0) {
-                    Spacer()
+                    // Full-screen Camera Preview
                     ZStack {
-                        // Camera Preview
                         CameraPreview(camera: cameraModel)
-                            .aspectRatio(1, contentMode: .fit)
                             .clipped()
                         
-                        // White Rounded Border at Corners
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.white.opacity(0.7), lineWidth: 2)
-                            .padding(20)
+                        // Overlay with transparent center square
+                        Color.black.opacity(0.25)
+                            .mask(
+                                Rectangle()
+                                    .fill(Color.black.opacity(0.25))
+                                    .overlay(
+                                        Rectangle()
+                                            .fill(Color.clear)
+                                            .frame(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
+                                    )
+                            )
+                        
+                        // L-shaped corners around the central square
+                        LShapedCornersOverlay(width: geometry.size.width * 0.8)
                     }
-                    .frame(width: geometry.size.width, height: geometry.size.width)
-                    Spacer()
-                }
-                .background(Color.black)
-                
-                // Top and Bottom Dark Overlays
-                VStack {
-                    Rectangle()
-                        .fill(Color.black.opacity(0.25))
-                        .frame(height: (geometry.size.height - geometry.size.width) / 2)
-                    Spacer()
-                    Rectangle()
-                        .fill(Color.black.opacity(0.25))
-                        .frame(height: (geometry.size.height - geometry.size.width) / 2)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
                 }
             }
             
@@ -88,3 +83,4 @@ struct ContentView: View {
         }
     }
 }
+
