@@ -96,7 +96,7 @@ func processImage(uiImage: UIImage) -> UIImage {
     // Draw the cropped image
     croppedImage.draw(at: CGPoint.zero)
     
-    let overlayColor = UIColor.black.withAlphaComponent(0.25)
+    let overlayColor = UIColor.black.withAlphaComponent(0.925)
     let imageWidth = croppedImage.size.width
     let imageHeight = croppedImage.size.height
     

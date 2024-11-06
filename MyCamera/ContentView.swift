@@ -31,12 +31,12 @@ struct ContentView: View {
                                     .overlay(
                                         Rectangle()
                                             .fill(Color.clear)
-                                            .frame(width: geometry.size.width * 0.8, height: geometry.size.width * 0.8)
+                                            .frame(width: geometry.size.width * 1.0, height: geometry.size.width * 0.8)
                                     )
                             )
                         
                         // L-shaped corners around the central square
-                        LShapedCornersOverlay(width: geometry.size.width * 0.8)
+                        LShapedCornersOverlay(width: geometry.size.width * 1.0)
                     }
                     .frame(width: geometry.size.width, height: geometry.size.height)
                 }

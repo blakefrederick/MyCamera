@@ -38,7 +38,7 @@ struct CameraPreview: UIViewRepresentable {
         private func setupOverlayAndCorners() {
             // Full-screen overlay view with transparent center
             overlayView = UIView()
-            overlayView.backgroundColor = UIColor.black.withAlphaComponent(0.25)
+            overlayView.backgroundColor = UIColor.black.withAlphaComponent(0.925)
             overlayView.isUserInteractionEnabled = false // Ensure overlay doesn’t block interactions
             addSubview(overlayView)
             
@@ -69,7 +69,7 @@ struct CameraPreview: UIViewRepresentable {
             overlayView.frame = bounds
             
             // Define the square area in the center
-            let squareSize = min(bounds.width, bounds.height) * 0.8
+            let squareSize = min(bounds.width, bounds.height) * 1.0
             let centerX = (bounds.width - squareSize) / 2
             let centerY = (bounds.height - squareSize) / 2
             
