@@ -28,11 +28,13 @@ struct CameraPreview: UIViewRepresentable {
         override init(frame: CGRect) {
             super.init(frame: frame)
             setupOverlayAndCorners()
+            setupTapGestureRecognizer() 
         }
         
         required init?(coder: NSCoder) {
             super.init(coder: coder)
             setupOverlayAndCorners()
+            setupTapGestureRecognizer() 
         }
         
         private func setupOverlayAndCorners() {
@@ -60,6 +62,17 @@ struct CameraPreview: UIViewRepresentable {
             cornerView.layer.borderColor = UIColor.white.withAlphaComponent(0.7).cgColor
             cornerView.layer.borderWidth = 2
             return cornerView
+        }
+        
+        private func setupTapGestureRecognizer() {
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
+            self.addGestureRecognizer(tapGesture)
+        }
+        
+        @objc private func handleTap(_ sender: UITapGestureRecognizer) {
+            let location = sender.location(in: self)
+            print("Screen tapped")
+            print("Tapped at x: \(location.x), y: \(location.y)")
         }
         
         override func layoutSubviews() {

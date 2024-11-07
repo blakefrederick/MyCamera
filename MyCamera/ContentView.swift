@@ -34,9 +34,11 @@ struct ContentView: View {
                                             .frame(width: geometry.size.width * 1.0, height: geometry.size.width * 0.8)
                                     )
                             )
+                            .allowsHitTesting(false) 
                         
                         // L-shaped corners around the central square
                         LShapedCornersOverlay(width: geometry.size.width * 1.0)
+                            .allowsHitTesting(false) 
                     }
                     .frame(width: geometry.size.width, height: geometry.size.height)
                 }
@@ -48,6 +50,7 @@ struct ContentView: View {
                 Button(action: {
                     cameraModel.takePhoto()
                     triggerFlash()
+                    print("Took PHOTO")
                 }) {
                     Circle()
                         .fill(Color.white)
