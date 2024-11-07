@@ -15,6 +15,7 @@ class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
     var session = AVCaptureSession()
     private var photoOutput = AVCapturePhotoOutput()
     private let sessionQueue = DispatchQueue(label: "cameraSessionQueue")
+    var currentDevice: AVCaptureDevice?
     
     override init() {
         super.init()
@@ -27,6 +28,7 @@ class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
             guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
                 return
             }
+            self.currentDevice = device 
             
             do {
                 let input = try AVCaptureDeviceInput(device: device)
@@ -44,6 +46,31 @@ class CameraModel: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
             
             self.session.commitConfiguration()
             self.session.startRunning()
+        }
+    }
+
+    func focus(at point: CGPoint) {
+        sessionQueue.async {
+            guard let device = self.currentDevice else {
+                return
+            }
+            do {
+                try device.lockForConfiguration()
+
+                if device.isFocusPointOfInterestSupported && device.isFocusModeSupported(.autoFocus) {
+                    device.focusPointOfInterest = point
+                    device.focusMode = .autoFocus
+                }
+
+                if device.isExposurePointOfInterestSupported && device.isExposureModeSupported(.continuousAutoExposure) {
+                    device.exposurePointOfInterest = point
+                    device.exposureMode = .continuousAutoExposure
+                }
+
+                device.unlockForConfiguration()
+            } catch {
+                print("Error setting focus: \(error.localizedDescription)")
+            }
         }
     }
     

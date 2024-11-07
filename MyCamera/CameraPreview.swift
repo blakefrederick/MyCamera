@@ -11,6 +11,7 @@ import AVFoundation
 
 struct CameraPreview: UIViewRepresentable {
     class PreviewView: UIView {
+        var cameraModel: CameraModel?
         private var overlayView: UIView!
         private var topLeftCorner: UIView!
         private var topRightCorner: UIView!
@@ -73,6 +74,41 @@ struct CameraPreview: UIViewRepresentable {
             let location = sender.location(in: self)
             print("Screen tapped")
             print("Tapped at x: \(location.x), y: \(location.y)")
+
+            // Convert the tap location to a focus point in the camera's coordinate space
+            if let cameraModel = cameraModel {
+                let focusPoint = previewLayer.captureDevicePointConverted(fromLayerPoint: location)
+                cameraModel.focus(at: focusPoint)
+            }
+
+            // iconic yellow focus square
+            showFocusSquare(at: location)
+        }
+
+
+        private func showFocusSquare(at point: CGPoint) {
+            let focusSquareSize: CGFloat = 80
+            let focusSquare = UIView(frame: CGRect(x: 0, y: 0, width: focusSquareSize, height: focusSquareSize))
+            focusSquare.center = point
+            focusSquare.layer.borderColor = UIColor.yellow.cgColor
+            focusSquare.layer.borderWidth = 1.0
+            focusSquare.backgroundColor = UIColor.clear
+            addSubview(focusSquare)
+
+            focusSquare.transform = CGAffineTransform(scaleX: 1.5, y: 1.5)
+            focusSquare.alpha = 0.0
+
+            // iconic yellow focus square animation
+            UIView.animate(withDuration: 0.15, animations: {
+                focusSquare.transform = CGAffineTransform.identity
+                focusSquare.alpha = 1.0
+            }) { _ in
+                UIView.animate(withDuration: 0.5, delay: 0.5, options: [], animations: {
+                    focusSquare.alpha = 0.0
+                }) { _ in
+                    focusSquare.removeFromSuperview()
+                }
+            }
         }
         
         override func layoutSubviews() {
@@ -129,6 +165,7 @@ struct CameraPreview: UIViewRepresentable {
         let view = PreviewView()
         view.previewLayer.session = camera.session
         view.previewLayer.videoGravity = .resizeAspectFill
+        view.cameraModel = camera 
         return view
     }
     
